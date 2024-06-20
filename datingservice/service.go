@@ -82,12 +82,18 @@ func (s *DateService) Discover(userID int) ([]repository.User, error) {
 	return matches, nil
 }
 
-func (s *DateService) Swipe(swipeMessage repository.Swipe) error {
+func (s *DateService) Swipe(swipeMessage repository.Swipe) (bool, error) {
 	err := s.repo.SubmitSwipe(swipeMessage)
 	if err != nil {
-		return fmt.Errorf("submit swipe to repo: %w", err)
+		return false, fmt.Errorf("submit swipe to repo: %w", err)
 	}
-	return nil
+
+	match, err := s.repo.IsUserMatch(swipeMessage.UserID, swipeMessage.CandidateID)
+	if err != nil {
+		return false, fmt.Errorf("check for user match: %w", err)
+	}
+
+	return match, nil
 }
 
 func (s *DateService) AuthenticateUserToken(token string) (int, error) {

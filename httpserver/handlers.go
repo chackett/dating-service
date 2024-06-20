@@ -186,14 +186,39 @@ func (h *handler) handlePOSTSwipe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.dateService.Swipe(input)
+	match, err := h.dateService.Swipe(input)
 	if err != nil {
 		h.logger.Error("date service swipe: %w", err)
 		h.writePlainResponse(w, http.StatusInternalServerError, "unable to submit swipe message")
 		return
 	}
 
-	h.writePlainResponse(w, http.StatusCreated, "")
+	// TODO: This is all a bit janky, admittedly. Tidy up.
+	type subResults struct {
+		Matched bool `json:"matched"`
+		MatchID int  `json:"matchID,omitempty"`
+	}
+
+	var matchedCandidateID int
+	if match {
+		matchedCandidateID = input.CandidateID
+	}
+
+	result := struct {
+		Results subResults
+	}{
+		Results: subResults{
+			Matched: match,
+			MatchID: matchedCandidateID,
+		},
+	}
+
+	btsResult, err := json.Marshal(result)
+	if err != nil {
+		h.writePlainResponse(w, http.StatusInternalServerError, "an error has occurred")
+		return
+	}
+	h.writeJSONResponse(w, http.StatusCreated, string(btsResult))
 }
 
 func (h *handler) writeJSONResponse(w http.ResponseWriter, statusCode int, message string) {

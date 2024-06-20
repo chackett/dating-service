@@ -81,6 +81,20 @@ func (r *Repository) SubmitSwipe(input Swipe) error {
 	return nil
 }
 
+func (r *Repository) IsUserMatch(userID int, candidateID int) (bool, error) {
+	var count int64
+	// Check if there is a mutual like between userID1 and userID2
+	err := r.db.Table("swipes").
+		Where("(user_id = ? AND candidate_id = ? AND likes = ?) OR (user_id = ? AND candidate_id = ? AND likes = ?)",
+			userID, candidateID, true, candidateID, userID, true).
+		Count(&count).Error
+	if err != nil {
+		return false, fmt.Errorf("query for mutual matches: %w", err)
+	}
+
+	return count == 2, nil
+}
+
 func (r *Repository) GetUserFromAuthToken(token string) (*User, error) {
 	user := &User{}
 	res := r.db.Joins("JOIN sessions ON sessions.user_id = users.id").
