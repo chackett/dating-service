@@ -205,7 +205,7 @@ func (h *handler) handlePOSTSwipe(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result := struct {
-		Results subResults
+		Results subResults `json:"results"`
 	}{
 		Results: subResults{
 			Matched: match,
