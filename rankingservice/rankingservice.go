@@ -29,9 +29,11 @@ func (r *RankedResultSet) AddMatch(input RankedMatch) {
 		m := r.Matches[i]
 		if input.Ranking < m.Ranking || input.Ranking == m.Ranking {
 			r.Matches = append(r.Matches, input)
+			break
 		} else if input.Ranking > m.Ranking {
 			// Prepend
 			r.Matches = append([]RankedMatch{input}, r.Matches...)
+			break
 		}
 	}
 }
