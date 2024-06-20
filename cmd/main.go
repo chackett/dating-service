@@ -1,15 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"github.com/caarlos0/env"
 	"github.com/chackett/dating-service/datingservice"
 	"github.com/chackett/dating-service/httpserver"
 	"github.com/chackett/dating-service/repository"
 	"log/slog"
 	"os"
-	"os/signal"
-	"syscall"
 )
 
 type App struct {
@@ -46,49 +43,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	//app := App{
-	//	logger: logger,
-	//	cfg:    cfg,
-	//	server: server,
-	//}
-
-	//go app.listenForSigKill()
-
 	err = server.Serve()
 	if err != nil {
 		logger.Error("start webserver", err)
 	}
-}
-
-func cleanup() {
-
-}
-
-func (app *App) listenForSigKill() {
-	fmt.Println("listen for kill")
-	// Set up signal handling.
-	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
-
-	done := make(chan bool, 1)
-	go func() {
-		sig := <-signals
-		fmt.Println("")
-		fmt.Println("Disconnection requested via Ctrl+C", sig)
-		done <- true
-	}()
-
-	app.logger.Debug("SIGKILL detected")
-	<-done
-
-	err := app.server.Close()
-	if err != nil {
-		app.logger.Error("shutdown webserver", err)
-		os.Exit(1)
-	}
-	app.logger.Info("did close webserver")
-
-	cleanup()
-
-	os.Exit(0)
 }
