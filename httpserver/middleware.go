@@ -36,7 +36,6 @@ func (h *handler) middlewareAuth(next http.Handler) http.Handler {
 
 		var authToken string
 		if !rc.authUser {
-			log.Printf("Completed (unauthenticated) %s in %v", r.URL.Path, time.Since(start))
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -44,15 +43,19 @@ func (h *handler) middlewareAuth(next http.Handler) http.Handler {
 		authToken = r.Header.Get("Authorization")
 		split := strings.Split(authToken, " ")
 		if len(split) < 2 {
-			h.writePlainResponse(w, http.StatusUnauthorized, "invalid auth token")
+			respCode := http.StatusUnauthorized
+			h.writePlainResponse(w, respCode, "invalid auth token")
+			log.Printf("Completed (unauthenticated) %s with response code (%d) in %v", r.URL.Path, respCode, time.Since(start))
 			return
 		}
 		authToken = split[1]
 
 		userID, err := h.dateService.AuthenticateUserToken(authToken)
 		if err != nil {
+			respCode := http.StatusUnauthorized
 			h.logger.Error("authenticate user token", err)
-			h.writePlainResponse(w, http.StatusUnauthorized, "invalid auth token")
+			h.writePlainResponse(w, respCode, "invalid auth token")
+			log.Printf("Completed (unauthenticated) %s with response code (%d) in %v", r.URL.Path, respCode, time.Since(start))
 			return
 		}
 
