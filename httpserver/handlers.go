@@ -84,7 +84,7 @@ func (h *handler) handlePOSTCreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	createdUser, err := h.dateService.CreateUser(u)
+	createdUser, err := h.dateService.CreateUser(r.Context(), u)
 	if err != nil {
 		h.logger.Error("create user: %w", err)
 		h.writePlainResponse(w, http.StatusInternalServerError, "unable to create user")
@@ -115,7 +115,7 @@ func (h *handler) handlePOSTLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := h.dateService.Login(input.Email, input.Password)
+	token, err := h.dateService.Login(r.Context(), input.Email, input.Password)
 	if err != nil {
 		h.logger.Error("date service login attempt", err)
 		h.writePlainResponse(w, http.StatusUnauthorized, "incorrect email / password combination")
@@ -143,7 +143,7 @@ func (h *handler) handleGETDiscover(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	matches, err := h.dateService.Discover(sessionUserID)
+	matches, err := h.dateService.Discover(r.Context(), sessionUserID)
 	if err != nil {
 		h.writePlainResponse(w, http.StatusInternalServerError, "an error has occurred")
 		return
@@ -186,7 +186,7 @@ func (h *handler) handlePOSTSwipe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	match, err := h.dateService.Swipe(input)
+	match, err := h.dateService.Swipe(r.Context(), input)
 	if err != nil {
 		h.logger.Error("date service swipe: %w", err)
 		h.writePlainResponse(w, http.StatusInternalServerError, "unable to submit swipe message")

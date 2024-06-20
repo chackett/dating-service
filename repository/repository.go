@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"gorm.io/driver/mysql"
@@ -29,21 +30,17 @@ func New(user string, pass string, host string, port int, dbName string) (*Repos
 	return result, nil
 }
 
-func (r *Repository) CloseConnection() error {
-	return nil
-}
-
-func (r *Repository) CreateUser(newUser *User) (*User, error) {
-	res := r.db.Create(newUser)
+func (r *Repository) CreateUser(ctx context.Context, newUser *User) (*User, error) {
+	res := r.db.WithContext(ctx).Create(newUser)
 	if res.Error != nil {
 		return nil, fmt.Errorf("create user: %w", res.Error)
 	}
 	return newUser, nil
 }
 
-func (r *Repository) GetUser(emailAddress string) (User, error) {
+func (r *Repository) GetUser(ctx context.Context, emailAddress string) (User, error) {
 	u := User{}
-	res := r.db.Where("email = ?", emailAddress).First(&u)
+	res := r.db.WithContext(ctx).Where("email = ?", emailAddress).First(&u)
 	if res.Error != nil {
 		return User{}, fmt.Errorf("retrieve user by email: %w", res.Error)
 	}
@@ -51,20 +48,20 @@ func (r *Repository) GetUser(emailAddress string) (User, error) {
 	return u, nil
 }
 
-func (r *Repository) CreateUserAuthSession(session Session) error {
-	res := r.db.Create(&session)
+func (r *Repository) CreateUserAuthSession(ctx context.Context, session Session) error {
+	res := r.db.WithContext(ctx).Create(&session)
 	if res.Error != nil {
 		return fmt.Errorf("create user auth session: %w", res.Error)
 	}
 	return nil
 }
 
-func (r *Repository) GetUnratedUsers(userID int) ([]User, error) {
+func (r *Repository) GetUnratedUsers(ctx context.Context, userID int) ([]User, error) {
 	var unratedUsers []User
 
-	subquery := r.db.Table("swipes").Select("candidate_id").Where("user_id = ?", userID)
+	subquery := r.db.WithContext(ctx).Table("swipes").Select("candidate_id").Where("user_id = ?", userID)
 
-	res := r.db.Where("id NOT IN (?) AND id != ?", subquery, userID).Find(&unratedUsers)
+	res := r.db.WithContext(ctx).Where("id NOT IN (?) AND id != ?", subquery, userID).Find(&unratedUsers)
 	if res.Error != nil {
 		return nil, fmt.Errorf("error retrieving unrated users: %w", res.Error)
 	}
@@ -72,8 +69,8 @@ func (r *Repository) GetUnratedUsers(userID int) ([]User, error) {
 	return unratedUsers, nil
 }
 
-func (r *Repository) SubmitSwipe(input Swipe) error {
-	res := r.db.Create(input)
+func (r *Repository) SubmitSwipe(ctx context.Context, input Swipe) error {
+	res := r.db.WithContext(ctx).Create(input)
 	if res.Error != nil {
 		return fmt.Errorf("submit swipe to db: %w", res.Error)
 	}
@@ -81,10 +78,10 @@ func (r *Repository) SubmitSwipe(input Swipe) error {
 	return nil
 }
 
-func (r *Repository) IsUserMatch(userID int, candidateID int) (bool, error) {
+func (r *Repository) IsUserMatch(ctx context.Context, userID int, candidateID int) (bool, error) {
 	var count int64
 	// Check if there is a mutual like between userID1 and userID2
-	err := r.db.Table("swipes").
+	err := r.db.WithContext(ctx).Table("swipes").
 		Where("(user_id = ? AND candidate_id = ? AND likes = ?) OR (user_id = ? AND candidate_id = ? AND likes = ?)",
 			userID, candidateID, true, candidateID, userID, true).
 		Count(&count).Error
@@ -95,9 +92,9 @@ func (r *Repository) IsUserMatch(userID int, candidateID int) (bool, error) {
 	return count == 2, nil
 }
 
-func (r *Repository) GetUserFromAuthToken(token string) (*User, error) {
+func (r *Repository) GetUserFromAuthToken(ctx context.Context, token string) (*User, error) {
 	user := &User{}
-	res := r.db.Joins("JOIN sessions ON sessions.user_id = users.id").
+	res := r.db.WithContext(ctx).Joins("JOIN sessions ON sessions.user_id = users.id").
 		Where("sessions.token = ?", token).
 		First(user)
 	if res.Error != nil {

@@ -1,6 +1,7 @@
 package datingservice
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/chackett/dating-service/pkg/security"
@@ -25,14 +26,14 @@ func New(repo *repository.Repository) (*DateService, error) {
 	return result, nil
 }
 
-func (s *DateService) CreateUser(user repository.User) (*repository.User, error) {
+func (s *DateService) CreateUser(ctx context.Context, user repository.User) (*repository.User, error) {
 	h, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.MinCost)
 	if err != nil {
 		return nil, fmt.Errorf("unable to hash password: %w", err)
 	}
 
 	user.Password = string(h)
-	createdUser, err := s.repo.CreateUser(&user)
+	createdUser, err := s.repo.CreateUser(ctx, &user)
 	if err != nil {
 		return nil, errors.New("")
 	}
@@ -41,8 +42,8 @@ func (s *DateService) CreateUser(user repository.User) (*repository.User, error)
 	return createdUser, nil
 }
 
-func (s *DateService) Login(email string, password string) (string, error) {
-	user, err := s.repo.GetUser(email)
+func (s *DateService) Login(ctx context.Context, email string, password string) (string, error) {
+	user, err := s.repo.GetUser(ctx, email)
 	if err != nil {
 		return "", fmt.Errorf("get user password hash: %w", err)
 	}
@@ -66,7 +67,7 @@ func (s *DateService) Login(email string, password string) (string, error) {
 		ExpiresAt: now.Add(time.Hour * 24),
 	}
 
-	err = s.repo.CreateUserAuthSession(userSession)
+	err = s.repo.CreateUserAuthSession(ctx, userSession)
 	if err != nil {
 		return "", fmt.Errorf("create user auth session: %w", err)
 	}
@@ -74,21 +75,21 @@ func (s *DateService) Login(email string, password string) (string, error) {
 	return userSession.Token, nil
 }
 
-func (s *DateService) Discover(userID int) ([]repository.User, error) {
-	matches, err := s.repo.GetUnratedUsers(userID)
+func (s *DateService) Discover(ctx context.Context, userID int) ([]repository.User, error) {
+	matches, err := s.repo.GetUnratedUsers(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("discover matches in repo: %w", err)
 	}
 	return matches, nil
 }
 
-func (s *DateService) Swipe(swipeMessage repository.Swipe) (bool, error) {
-	err := s.repo.SubmitSwipe(swipeMessage)
+func (s *DateService) Swipe(ctx context.Context, swipeMessage repository.Swipe) (bool, error) {
+	err := s.repo.SubmitSwipe(ctx, swipeMessage)
 	if err != nil {
 		return false, fmt.Errorf("submit swipe to repo: %w", err)
 	}
 
-	match, err := s.repo.IsUserMatch(swipeMessage.UserID, swipeMessage.CandidateID)
+	match, err := s.repo.IsUserMatch(ctx, swipeMessage.UserID, swipeMessage.CandidateID)
 	if err != nil {
 		return false, fmt.Errorf("check for user match: %w", err)
 	}
@@ -96,8 +97,8 @@ func (s *DateService) Swipe(swipeMessage repository.Swipe) (bool, error) {
 	return match, nil
 }
 
-func (s *DateService) AuthenticateUserToken(token string) (int, error) {
-	u, err := s.repo.GetUserFromAuthToken(token)
+func (s *DateService) AuthenticateUserToken(ctx context.Context, token string) (int, error) {
+	u, err := s.repo.GetUserFromAuthToken(ctx, token)
 	if err != nil {
 		return 0, fmt.Errorf("get user from auth token: %w", err)
 	}

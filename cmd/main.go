@@ -33,10 +33,6 @@ func main() {
 		logger.Error("unable to instantiate repository: %w", err)
 		os.Exit(1)
 	}
-	defer func() {
-		err = repo.CloseConnection()
-		logger.Error("error closing connection to db/repository", "error", err)
-	}()
 
 	ds, err := datingservice.New(repo)
 	if err != nil {

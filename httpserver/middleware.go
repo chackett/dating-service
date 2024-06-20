@@ -50,7 +50,7 @@ func (h *handler) middlewareAuth(next http.Handler) http.Handler {
 		}
 		authToken = split[1]
 
-		userID, err := h.dateService.AuthenticateUserToken(authToken)
+		userID, err := h.dateService.AuthenticateUserToken(r.Context(), authToken)
 		if err != nil {
 			respCode := http.StatusUnauthorized
 			h.logger.Error("authenticate user token", err)
