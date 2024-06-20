@@ -188,7 +188,10 @@ func (h *handler) handlePOSTSwipe(w http.ResponseWriter, r *http.Request) {
 
 	match, err := h.dateService.Swipe(r.Context(), input)
 	if err != nil {
-		h.logger.Error("date service swipe: %w", err)
+		if errors.As(datingservice.ErrDuplicateSwipe, &err) {
+			h.writePlainResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
 		h.writePlainResponse(w, http.StatusInternalServerError, "unable to submit swipe message")
 		return
 	}

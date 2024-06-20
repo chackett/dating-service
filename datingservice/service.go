@@ -7,10 +7,13 @@ import (
 	"github.com/chackett/dating-service/pkg/security"
 	"github.com/chackett/dating-service/repository"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 	"log/slog"
 	"os"
 	"time"
 )
+
+var ErrDuplicateSwipe = errors.New("already swiped this user")
 
 type DateService struct {
 	logger *slog.Logger
@@ -88,6 +91,9 @@ func (s *DateService) Discover(ctx context.Context, userID int) ([]repository.Us
 func (s *DateService) Swipe(ctx context.Context, swipeMessage repository.Swipe) (bool, error) {
 	err := s.repo.SubmitSwipe(ctx, swipeMessage)
 	if err != nil {
+		if errors.As(gorm.ErrDuplicatedKey, &err) {
+			return false, ErrDuplicateSwipe
+		}
 		return false, fmt.Errorf("submit swipe to repo: %w", err)
 	}
 

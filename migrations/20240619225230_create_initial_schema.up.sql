@@ -18,6 +18,7 @@ CREATE TABLE swipes
     candidate_id INT  NOT NULL,
     likes          BOOL NOT NULL,
     created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY idx_swipes_swiper_swiped (user_id, candidate_id),
     FOREIGN KEY (user_id) REFERENCES users (id),
     FOREIGN KEY (candidate_id) REFERENCES users (id)
 );
