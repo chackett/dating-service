@@ -87,14 +87,14 @@ func (h *handler) handlePOSTCreateUser(w http.ResponseWriter, r *http.Request) {
 	createdUser, err := h.dateService.CreateUser(r.Context(), u)
 	if err != nil {
 		h.logger.Error("create user: %w", err)
-		h.writePlainResponse(w, http.StatusInternalServerError, "unable to create user")
+		h.writePlainResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	btsUser, err := json.Marshal(createdUser)
 	if err != nil {
 		h.logger.Error("marshal created user: %w", err)
-		h.writePlainResponse(w, http.StatusInternalServerError, "user created, but error returning to caller")
+		h.writePlainResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 

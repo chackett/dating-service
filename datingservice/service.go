@@ -39,6 +39,8 @@ func (s *DateService) CreateUser(ctx context.Context, user repository.User) (*re
 	}
 	// Clear password as soon as is appropriate.
 	createdUser.Password = ""
+	createdUser.Age = createdUser.CalculateAge()
+	createdUser.DateOfBirth = nil
 	return createdUser, nil
 }
 

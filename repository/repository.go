@@ -16,7 +16,7 @@ type Repository struct {
 }
 
 func New(user string, pass string, host string, port int, dbName string) (*Repository, error) {
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", user, pass, host, port, dbName)
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=True", user, pass, host, port, dbName)
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, fmt.Errorf("unable to connect to DB: %w", err)
