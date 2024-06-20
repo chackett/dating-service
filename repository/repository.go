@@ -38,7 +38,17 @@ func (r *Repository) CreateUser(ctx context.Context, newUser *User) (*User, erro
 	return newUser, nil
 }
 
-func (r *Repository) GetUser(ctx context.Context, emailAddress string) (User, error) {
+func (r *Repository) GetUserByID(ctx context.Context, id int) (User, error) {
+	u := User{}
+	res := r.db.WithContext(ctx).Where("id = ?", id).First(&u)
+	if res.Error != nil {
+		return User{}, fmt.Errorf("retrieve user by id: %w", res.Error)
+	}
+
+	return u, nil
+}
+
+func (r *Repository) GetUserByEmail(ctx context.Context, emailAddress string) (User, error) {
 	u := User{}
 	res := r.db.WithContext(ctx).Where("email = ?", emailAddress).First(&u)
 	if res.Error != nil {

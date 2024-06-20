@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/chackett/dating-service/datingservice"
+	"github.com/chackett/dating-service/rankingservice"
 	"github.com/chackett/dating-service/repository"
 	"log/slog"
 	"net/http"
@@ -150,9 +151,9 @@ func (h *handler) handleGETDiscover(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := struct {
-		Results []repository.User `json:"results"`
+		Results []rankingservice.RankedMatch `json:"results"`
 	}{
-		Results: matches,
+		Results: matches.Matches,
 	}
 
 	btsResp, err := json.Marshal(resp)

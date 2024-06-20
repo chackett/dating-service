@@ -12,6 +12,7 @@ type User struct {
 	Gender      string     `json:"gender,omitempty"`
 	DateOfBirth *time.Time `json:"date_of_birth,omitempty"`
 	Age         int        `json:"age,omitempty" gorm:"-"`
+	Location    string     `json:"location,omitempty"`
 }
 
 func (u *User) CalculateAge() int {
@@ -22,4 +23,8 @@ func (u *User) CalculateAge() int {
 		age = age - 1
 	}
 	return age
+}
+
+func (u *User) RankCandidate(candidate User) (int, error) {
+	return 0, nil
 }

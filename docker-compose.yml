@@ -1,0 +1,44 @@
+services:
+  mysql:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: datingservice_dev
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - app-network
+
+  migrate:
+    image: migrate/migrate
+    command: ["-path", "/migrations", "-database", "mysql://user:password@tcp(mysql:3306)/datingservice_dev", "up"]
+    volumes:
+      - ./migrations:/migrations
+    networks:
+      - app-network
+
+  app:
+    build: .
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: user
+      DB_PASS: password
+      DB_NAME: datingservice_dev
+      SERVICE_PORT: 8080
+    networks:
+      - app-network
+
+volumes:
+  mysql-data:
+
+networks:
+  app-network:

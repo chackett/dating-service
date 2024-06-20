@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/chackett/dating-service/pkg/security"
+	"github.com/chackett/dating-service/rankingservice"
 	"github.com/chackett/dating-service/repository"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -14,6 +15,8 @@ import (
 )
 
 var ErrDuplicateSwipe = errors.New("already swiped this user")
+
+const ctxKeySessionUserID = "session_user_id"
 
 type DateService struct {
 	logger *slog.Logger
@@ -48,7 +51,7 @@ func (s *DateService) CreateUser(ctx context.Context, user repository.User) (*re
 }
 
 func (s *DateService) Login(ctx context.Context, email string, password string) (string, error) {
-	user, err := s.repo.GetUser(ctx, email)
+	user, err := s.repo.GetUserByEmail(ctx, email)
 	if err != nil {
 		return "", fmt.Errorf("get user password hash: %w", err)
 	}
@@ -80,12 +83,38 @@ func (s *DateService) Login(ctx context.Context, email string, password string) 
 	return userSession.Token, nil
 }
 
-func (s *DateService) Discover(ctx context.Context, userID int) ([]repository.User, error) {
-	matches, err := s.repo.GetUnratedUsers(ctx, userID)
-	if err != nil {
-		return nil, fmt.Errorf("discover matches in repo: %w", err)
+func (s *DateService) Discover(ctx context.Context, userID int) (rankingservice.RankedResultSet, error) {
+	sessionUserID, ok := ctx.Value(ctxKeySessionUserID).(int)
+	if !ok {
+		return rankingservice.RankedResultSet{}, errors.New("cannot find user id in context")
 	}
-	return matches, nil
+	currentUser, err := s.repo.GetUserByID(ctx, sessionUserID)
+	if err != nil {
+		return rankingservice.RankedResultSet{}, fmt.Errorf("find user by d in repo: %w", err)
+	}
+
+	candidateMatches, err := s.repo.GetUnratedUsers(ctx, userID)
+	if err != nil {
+		return rankingservice.RankedResultSet{}, fmt.Errorf("discover candidateMatches in repo: %w", err)
+	}
+
+	rankedMatches := rankingservice.NewRankedResultSet()
+
+	for _, c := range candidateMatches {
+		score, err := currentUser.RankCandidate(c)
+		if err != nil {
+			s.logger.Error("error ranking user (%d) with candidate (%d): %w", currentUser.ID, c.ID, err)
+		}
+
+		rankedMatch := rankingservice.RankedMatch{
+			User:    c,
+			Ranking: score,
+		}
+
+		rankedMatches.AddMatch(rankedMatch)
+	}
+
+	return rankedMatches, nil
 }
 
 func (s *DateService) Swipe(ctx context.Context, swipeMessage repository.Swipe) (bool, error) {

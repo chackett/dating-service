@@ -1,4 +1,4 @@
 DROP TABLE IF EXISTS user_preferences;
-DROP TABLE IF EXISTS user_sessions;
+DROP TABLE IF EXISTS sessions;
 DROP TABLE IF EXISTS swipes;
 DROP TABLE IF EXISTS users;
