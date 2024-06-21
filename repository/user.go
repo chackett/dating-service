@@ -13,7 +13,7 @@ type User struct {
 	Password    string     `json:"password,omitempty" `
 	Name        string     `json:"name,omitempty"`
 	Gender      string     `json:"gender,omitempty"`
-	DateOfBirth *time.Time `json:"date_of_birth,omitempty"`
+	DateOfBirth *time.Time `json:"dateOfBirth,omitempty"`
 	Age         int        `json:"age,omitempty" gorm:"-"`
 	Location    string     `json:"location,omitempty"`
 }

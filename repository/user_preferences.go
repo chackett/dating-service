@@ -3,12 +3,12 @@ package repository
 import "strings"
 
 type UserPreferences struct {
-	UserID         int    `json:"user_id"`
-	WantsChildren  bool   `json:"wants_children"`
-	EnjoysTravel   bool   `json:"enjoys_travel"`
-	EducationLevel string `json:"education_level"`
-	MinAge         int    `json:"min_age"`
-	MaxAge         int    `json:"max_age"`
+	UserID         int    `json:"userd"`
+	WantsChildren  bool   `json:"wantsChildren"`
+	EnjoysTravel   bool   `json:"enjoysTravel"`
+	EducationLevel string `json:"educationLevel"`
+	MinAge         int    `json:"minAge"`
+	MaxAge         int    `json:"maxAge"`
 	Genders        string `json:"genders"`
 }
 
