@@ -9,7 +9,7 @@ CREATE TABLE users
     gender        VARCHAR(10),
     date_of_birth DATE,
     created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    location      VARCHAR(255) NOT NULL
+    location      VARCHAR(255)
 );
 
 CREATE TABLE swipes

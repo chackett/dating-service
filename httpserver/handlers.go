@@ -43,6 +43,10 @@ func newHandler(ds *datingservice.DateService) (*handler, error) {
 			authUser: false,
 			handler:  result.handlePOSTCreateUser,
 		},
+		"POST /user/preferences": {
+			authUser: true,
+			handler:  result.handlePOSTUserPreferences,
+		},
 		"POST /login": {
 			authUser: false,
 			handler:  result.handlePOSTLogin,
@@ -101,6 +105,40 @@ func (h *handler) handlePOSTCreateUser(w http.ResponseWriter, r *http.Request) {
 
 	h.writePlainResponse(w, http.StatusCreated, string(btsUser))
 }
+
+func (h *handler) handlePOSTUserPreferences(w http.ResponseWriter, r *http.Request) {
+	input := repository.UserPreferences{}
+
+	r.Body = http.MaxBytesReader(w, r.Body, maxRequestBodySize)
+	err := json.NewDecoder(r.Body).Decode(&input)
+	if err != nil {
+		h.logger.Error("decode create user preferences message: %w", err)
+		h.writePlainResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	sessionUserID, ok := r.Context().Value(ctxKeySessionUserID).(int)
+	if !ok {
+		h.writePlainResponse(w, http.StatusBadRequest, "invalid user")
+		return
+	}
+
+	if sessionUserID != input.UserID {
+		h.logger.Info("unauthorized attempt by user `%d` to update preferences for other user `%d`", sessionUserID, input.UserID)
+		h.writePlainResponse(w, http.StatusBadRequest, "logged in user mismatch with preference request")
+		return
+	}
+
+	err = h.dateService.SetUserPreferences(r.Context(), input)
+	if err != nil {
+		h.logger.Error("create user preferences: %w", err)
+		h.writePlainResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	h.writePlainResponse(w, http.StatusCreated, "")
+}
+
 func (h *handler) handlePOSTLogin(w http.ResponseWriter, r *http.Request) {
 	// Use anonymous struct as login messages are pretty much isolated to this function
 	input := struct {

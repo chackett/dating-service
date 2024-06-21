@@ -1,6 +1,9 @@
 package rankingservice
 
-import "github.com/chackett/dating-service/repository"
+import (
+	"github.com/chackett/dating-service/repository"
+	"sort"
+)
 
 type RankedMatch struct {
 	repository.User
@@ -19,21 +22,11 @@ func NewRankedResultSet() RankedResultSet {
 }
 
 func (r *RankedResultSet) AddMatch(input RankedMatch) {
-	// Base case - start off empty
-	if len(r.Matches) == 0 {
-		r.Matches = append(r.Matches, input)
-		return
-	}
+	index := sort.Search(len(r.Matches), func(i int) bool {
+		return r.Matches[i].Ranking <= input.Ranking
+	})
 
-	for i := 0; i < len(r.Matches); i++ {
-		m := r.Matches[i]
-		if input.Ranking < m.Ranking || input.Ranking == m.Ranking {
-			r.Matches = append(r.Matches, input)
-			break
-		} else if input.Ranking > m.Ranking {
-			// Prepend
-			r.Matches = append([]RankedMatch{input}, r.Matches...)
-			break
-		}
-	}
+	r.Matches = append(r.Matches, RankedMatch{})
+	copy(r.Matches[index+1:], r.Matches[index:])
+	r.Matches[index] = input
 }

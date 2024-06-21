@@ -50,6 +50,14 @@ func (s *DateService) CreateUser(ctx context.Context, user repository.User) (*re
 	return createdUser, nil
 }
 
+func (s *DateService) SetUserPreferences(ctx context.Context, prefs repository.UserPreferences) error {
+	err := s.repo.UpsertUserPreferences(ctx, prefs)
+	if err != nil {
+		return fmt.Errorf("unable to upsert user preferences: %w", err)
+	}
+	return nil
+}
+
 func (s *DateService) Login(ctx context.Context, email string, password string) (string, error) {
 	user, err := s.repo.GetUserByEmail(ctx, email)
 	if err != nil {
@@ -98,16 +106,25 @@ func (s *DateService) Discover(ctx context.Context, userID int) (rankingservice.
 		return rankingservice.RankedResultSet{}, fmt.Errorf("discover candidateMatches in repo: %w", err)
 	}
 
+	userPrefs, err := s.repo.GetUserPreferences(ctx, sessionUserID)
+	if err != nil {
+		return rankingservice.RankedResultSet{}, fmt.Errorf("get user preferences from repo: %w", err)
+	}
 	rankedMatches := rankingservice.NewRankedResultSet()
 
-	for _, c := range candidateMatches {
-		score, err := currentUser.RankCandidate(c)
+	for _, cand := range candidateMatches {
+		canPrefs, err := s.repo.GetUserPreferences(ctx, cand.ID)
 		if err != nil {
-			s.logger.Error("error ranking user (%d) with candidate (%d): %w", currentUser.ID, c.ID, err)
+			return rankingservice.RankedResultSet{}, fmt.Errorf("get user preferences from repo: %w", err)
+		}
+
+		score, err := currentUser.RankCandidate(cand, userPrefs, canPrefs)
+		if err != nil {
+			s.logger.Error("error ranking user (%d) with candidate (%d): %w", currentUser.ID, cand.ID, err)
 		}
 
 		rankedMatch := rankingservice.RankedMatch{
-			User:    c,
+			User:    cand,
 			Ranking: score,
 		}
 

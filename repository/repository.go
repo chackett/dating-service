@@ -6,6 +6,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"log/slog"
 	"os"
 )
@@ -36,6 +37,18 @@ func (r *Repository) CreateUser(ctx context.Context, newUser *User) (*User, erro
 		return nil, fmt.Errorf("create user: %w", res.Error)
 	}
 	return newUser, nil
+}
+
+func (r *Repository) UpsertUserPreferences(ctx context.Context, prefs UserPreferences) error {
+	res := r.db.WithContext(ctx).Clauses(
+		clause.OnConflict{
+			UpdateAll: true,
+		},
+	).Create(prefs)
+	if res.Error != nil {
+		return fmt.Errorf("upsert user preferences: %w", res.Error)
+	}
+	return nil
 }
 
 func (r *Repository) GetUserByID(ctx context.Context, id int) (User, error) {
@@ -111,4 +124,16 @@ func (r *Repository) GetUserFromAuthToken(ctx context.Context, token string) (*U
 		return nil, fmt.Errorf("user not found for auth token: %w", res.Error)
 	}
 	return user, nil
+}
+
+func (r *Repository) GetUserPreferences(ctx context.Context, userID int) (UserPreferences, error) {
+	var preferences UserPreferences
+	res := r.db.WithContext(ctx).Table("user_preferences").Joins("JOIN users ON user_id = users.id").
+		Where("users.id = ?", userID).
+		First(&preferences)
+	if res.Error != nil {
+		return UserPreferences{}, fmt.Errorf("user preferences not found for user (%d): %w", userID, res.Error)
+	}
+
+	return preferences, nil
 }
