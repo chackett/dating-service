@@ -123,9 +123,15 @@ func (s *DateService) Discover(ctx context.Context, userID int) (rankingservice.
 			s.logger.Error("error ranking user (%d) with candidate (%d): %w", currentUser.ID, cand.ID, err)
 		}
 
+		if score == -1 {
+			// Don't add candidate to results
+			continue
+		}
+
 		candidateDistance := currentUser.DistanceFromUser(cand)
 		// Purge sensitive fields before adding to result set
 		cand.Location = ""
+		cand.Age = cand.CalculateAge()
 		cand.DateOfBirth = nil
 		cand.Password = ""
 		cand.Email = ""

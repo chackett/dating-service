@@ -3,6 +3,7 @@
   <component name="SqlDialectMappings">
     <file url="file://$PROJECT_DIR$/migrations/20240619225230_create_initial_schema.down.sql" dialect="MySQL" />
     <file url="file://$PROJECT_DIR$/migrations/20240619225230_create_initial_schema.up.sql" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/migrations/20240621013534_seed_user_data.up.sql" dialect="MySQL" />
     <file url="file://$PROJECT_DIR$/scripts/bootstrap_users.sql" dialect="MySQL" />
   </component>
 </project>

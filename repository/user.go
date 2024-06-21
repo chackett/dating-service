@@ -52,9 +52,12 @@ func (u *User) DistanceFromUser(candidate User) int {
 }
 
 func (u *User) RankCandidate(candidate User, userPrefs UserPreferences, canPrefs UserPreferences) (int, error) {
+
+	// Ranking is used to score a candidate. Note for total mismatched candidates, -1 is returned immediately.
+	// While other comparisons might not be a direct match, it doesn't indicate a total lack of suitability.
 	ranking := 0
-	if contains(userPrefs.ReadGenders(), candidate.Gender) {
-		ranking++
+	if !contains(userPrefs.ReadGenders(), candidate.Gender) {
+		return -1, nil
 	}
 
 	candidateAge := candidate.CalculateAge()

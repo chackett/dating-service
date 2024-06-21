@@ -8,5 +8,12 @@
       <jdbc-url>jdbc:mysql://address=(protocol=tcp)(host=172.17.0.2)(port=3306)</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
+    <data-source source="LOCAL" name="datingservice_dev@localhost" uuid="c23790e6-7b7c-4772-b03c-b2b482eb8692">
+      <driver-ref>mysql.8</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>
+      <jdbc-url>jdbc:mysql://localhost:3306/datingservice_dev</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
   </component>
 </project>

@@ -3,7 +3,7 @@ package repository
 import "strings"
 
 type UserPreferences struct {
-	UserID         int    `json:"userd"`
+	UserID         int    `json:"userId"`
 	WantsChildren  bool   `json:"wantsChildren"`
 	EnjoysTravel   bool   `json:"enjoysTravel"`
 	EducationLevel string `json:"educationLevel"`
