@@ -123,9 +123,16 @@ func (s *DateService) Discover(ctx context.Context, userID int) (rankingservice.
 			s.logger.Error("error ranking user (%d) with candidate (%d): %w", currentUser.ID, cand.ID, err)
 		}
 
+		candidateDistance := currentUser.DistanceFromUser(cand)
+		// Purge sensitive fields before adding to result set
+		cand.Location = ""
+		cand.DateOfBirth = nil
+		cand.Password = ""
+		cand.Email = ""
 		rankedMatch := rankingservice.RankedMatch{
-			User:    cand,
-			Ranking: score,
+			User:           cand,
+			Ranking:        score,
+			DistanceFromMe: candidateDistance,
 		}
 
 		rankedMatches.AddMatch(rankedMatch)

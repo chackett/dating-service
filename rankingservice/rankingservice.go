@@ -7,7 +7,8 @@ import (
 
 type RankedMatch struct {
 	repository.User
-	Ranking int `json:"ranking"`
+	Ranking        int `json:"ranking"`
+	DistanceFromMe int `json:"distanceFromMe"`
 }
 
 type RankedResultSet struct {

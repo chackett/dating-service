@@ -45,6 +45,12 @@ func (u *User) ReadLocation() haversine.Coord {
 	}
 }
 
+func (u *User) DistanceFromUser(candidate User) int {
+	_, km := haversine.Distance(u.ReadLocation(), candidate.ReadLocation())
+
+	return int(km)
+}
+
 func (u *User) RankCandidate(candidate User, userPrefs UserPreferences, canPrefs UserPreferences) (int, error) {
 	ranking := 0
 	if contains(userPrefs.ReadGenders(), candidate.Gender) {
