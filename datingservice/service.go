@@ -129,9 +129,9 @@ func (s *DateService) Discover(ctx context.Context, userID int) (rankingservice.
 		}
 
 		candidateDistance := currentUser.DistanceFromUser(cand)
+		cand.Age = cand.CalculateAge()
 		// Purge sensitive fields before adding to result set
 		cand.Location = ""
-		cand.Age = cand.CalculateAge()
 		cand.DateOfBirth = nil
 		cand.Password = ""
 		cand.Email = ""

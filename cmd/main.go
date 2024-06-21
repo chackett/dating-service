@@ -9,12 +9,6 @@ import (
 	"os"
 )
 
-type App struct {
-	logger *slog.Logger
-	cfg    *Config
-	server *httpserver.HTTPServer
-}
-
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 

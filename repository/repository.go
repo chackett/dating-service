@@ -103,7 +103,6 @@ func (r *Repository) SubmitSwipe(ctx context.Context, input Swipe) error {
 
 func (r *Repository) IsUserMatch(ctx context.Context, userID int, candidateID int) (bool, error) {
 	var count int64
-	// Check if there is a mutual like between userID1 and userID2
 	err := r.db.WithContext(ctx).Table("swipes").
 		Where("(user_id = ? AND candidate_id = ? AND likes = ?) OR (user_id = ? AND candidate_id = ? AND likes = ?)",
 			userID, candidateID, true, candidateID, userID, true).
