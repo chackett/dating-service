@@ -42,7 +42,9 @@ So I was manually running that script to MySQL to get me going.
 The API has been implemented as required, there was no mention of use of the authentication token.
 One `/login` has been called, all other calls are authenticated.
 The token that is returned by login should be added to subsequent calls as a header, as follows:
-`Authorization: Bearer 228b05b982fca3080f949cc76e2b4148f0145f010952f37e0f3041847b01dd11`
+```
+Authorization: Bearer 228b05b982fca3080f949cc76e2b4148f0145f010952f37e0f3041847b01dd11
+```
 
 (password for all accounts is `password`)
 
