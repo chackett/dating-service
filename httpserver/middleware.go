@@ -3,7 +3,6 @@ package httpserver
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -12,24 +11,24 @@ import (
 func (h *handler) middlewareRequestLogger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		log.Printf("Started %s %s", r.Method, r.URL.Path)
+		h.logger.Info("Started %s %s", r.Method, r.URL.Path)
 
 		// Call the next handler
 		next.ServeHTTP(w, r)
 
-		log.Printf("Completed %s in %v", r.URL.Path, time.Since(start))
+		h.logger.Info("Completed %s in %v", r.URL.Path, time.Since(start))
 	})
 }
 
 func (h *handler) middlewareAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		log.Printf("Started %s %s", r.Method, r.URL.Path)
+		h.logger.Info("Started %s %s", r.Method, r.URL.Path)
 
 		pattern := fmt.Sprintf("%s %s", r.Method, r.URL.Path)
 		rc, ok := h.routes[pattern]
 		if !ok {
-			log.Printf("%s %s - not configured", r.Method, r.URL.Path)
+			h.logger.Error("%s %s - not configured", r.Method, r.URL.Path)
 			h.writePlainResponse(w, http.StatusNotFound, "")
 			return
 		}
@@ -45,7 +44,7 @@ func (h *handler) middlewareAuth(next http.Handler) http.Handler {
 		if len(split) < 2 {
 			respCode := http.StatusUnauthorized
 			h.writePlainResponse(w, respCode, "invalid auth token")
-			log.Printf("Completed (unauthenticated) %s with response code (%d) in %v", r.URL.Path, respCode, time.Since(start))
+			h.logger.Info("Completed (unauthenticated) %s with response code (%d) in %v", r.URL.Path, respCode, time.Since(start))
 			return
 		}
 		authToken = split[1]
@@ -55,13 +54,13 @@ func (h *handler) middlewareAuth(next http.Handler) http.Handler {
 			respCode := http.StatusUnauthorized
 			h.logger.Error("authenticate user token", err)
 			h.writePlainResponse(w, respCode, "invalid auth token")
-			log.Printf("Completed (unauthenticated) %s with response code (%d) in %v", r.URL.Path, respCode, time.Since(start))
+			h.logger.Info("Completed (unauthenticated) %s with response code (%d) in %v", r.URL.Path, respCode, time.Since(start))
 			return
 		}
 
 		r = r.WithContext(context.WithValue(r.Context(), ctxKeySessionUserID, userID))
 
-		log.Printf("Completed (authenticated) %s in %v", r.URL.Path, time.Since(start))
+		h.logger.Info("Completed (authenticated) %s in %v", r.URL.Path, time.Since(start))
 		next.ServeHTTP(w, r)
 	})
 }

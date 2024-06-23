@@ -4,10 +4,13 @@ import (
 	"context"
 	"fmt"
 	"github.com/chackett/dating-service/datingservice"
+	"log/slog"
 	"net/http"
+	"os"
 )
 
 type HTTPServer struct {
+	logger *slog.Logger
 	server *http.Server
 	mux    http.Handler
 }
@@ -29,12 +32,14 @@ func New(port int, ds *datingservice.DateService) (*HTTPServer, error) {
 			Addr:    fmt.Sprintf(":%d", port),
 			Handler: h.mux,
 		},
+		logger: slog.New(slog.NewJSONHandler(os.Stdout, nil)),
 	}
 
 	return result, nil
 }
 
 func (s *HTTPServer) Serve() error {
+	s.logger.Info("HTTP serving...")
 	err := s.server.ListenAndServe()
 	if err != nil {
 		return fmt.Errorf("unable to start listening: %w", err)
@@ -43,7 +48,7 @@ func (s *HTTPServer) Serve() error {
 }
 
 func (s *HTTPServer) Close() error {
-	fmt.Println("shutting down")
+	s.logger.Info("shutting down server")
 	err := s.server.Shutdown(context.Background())
 	if err != nil {
 		return fmt.Errorf("unable to close web server listener: %w", err)

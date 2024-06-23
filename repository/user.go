@@ -101,3 +101,10 @@ func contains(s []string, e string) bool {
 	}
 	return false
 }
+
+func (u *User) MaskPrivateFields() {
+	u.Location = ""
+	u.DateOfBirth = nil
+	u.Password = ""
+	u.Email = ""
+}

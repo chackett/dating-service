@@ -6,6 +6,7 @@ import (
 	"fmt"
 )
 
+// CreateSecureSessionToken returns a cryptographically random hex string, with a length of n.
 func CreateSecureSessionToken(n int) (string, error) {
 	token := make([]byte, n)
 

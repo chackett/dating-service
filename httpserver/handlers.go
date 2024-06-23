@@ -12,10 +12,12 @@ import (
 )
 
 const (
-	maxRequestBodySize  = 1048576
-	ctxKeySessionUserID = "session_user_id"
+	maxRequestBodySizeBytes = 1048576
+	ctxKeySessionUserID     = "session_user_id"
 )
 
+// handler defines functionality for exposing routes via HTTP and also parsing the messages before passing onto the relevant
+// service.
 type handler struct {
 	dateService *datingservice.DateService
 	logger      *slog.Logger
@@ -23,11 +25,14 @@ type handler struct {
 	routes      map[string]routeConfig
 }
 
+// routeConfig stores an HTTP route and any config related to it. i.e. Authenticate it or not.
+// For a basic ACL you could add access level here.
 type routeConfig struct {
 	authUser bool
 	handler  func(http.ResponseWriter, *http.Request)
 }
 
+// newHandler creates and initialises the handler/routes.
 func newHandler(ds *datingservice.DateService) (*handler, error) {
 	if ds == nil {
 		return nil, errors.New("datingservice is nil")
@@ -63,6 +68,7 @@ func newHandler(ds *datingservice.DateService) (*handler, error) {
 	return result, nil
 }
 
+// setupRoutes applies the route configs to a HTTP mux/handler for serving.
 func (h *handler) setupRoutes(middlewares []func(h http.Handler) http.Handler) {
 	mux := http.NewServeMux()
 
@@ -78,10 +84,11 @@ func (h *handler) setupRoutes(middlewares []func(h http.Handler) http.Handler) {
 	}
 }
 
+// handlePOSTCreateUser handles requests to create new user
 func (h *handler) handlePOSTCreateUser(w http.ResponseWriter, r *http.Request) {
 	u := repository.User{}
 
-	r.Body = http.MaxBytesReader(w, r.Body, maxRequestBodySize)
+	r.Body = http.MaxBytesReader(w, r.Body, maxRequestBodySizeBytes)
 	err := json.NewDecoder(r.Body).Decode(&u)
 	if err != nil {
 		h.logger.Error("decode create user message: %w", err)
@@ -106,10 +113,11 @@ func (h *handler) handlePOSTCreateUser(w http.ResponseWriter, r *http.Request) {
 	h.writePlainResponse(w, http.StatusCreated, string(btsUser))
 }
 
+// handlePOSTUserPreferences handle request to set user preferences
 func (h *handler) handlePOSTUserPreferences(w http.ResponseWriter, r *http.Request) {
 	input := repository.UserPreferences{}
 
-	r.Body = http.MaxBytesReader(w, r.Body, maxRequestBodySize)
+	r.Body = http.MaxBytesReader(w, r.Body, maxRequestBodySizeBytes)
 	err := json.NewDecoder(r.Body).Decode(&input)
 	if err != nil {
 		h.logger.Error("decode create user preferences message: %w", err)
@@ -139,6 +147,9 @@ func (h *handler) handlePOSTUserPreferences(w http.ResponseWriter, r *http.Reque
 	h.writePlainResponse(w, http.StatusCreated, "")
 }
 
+// handlePOSTLogin handle requests to create authenticated session (i.e. Login)
+// Once this is successfully called with a valid username/password combination, then a token is returned which can be used
+// against subsequent authenticated HTTP calls.
 func (h *handler) handlePOSTLogin(w http.ResponseWriter, r *http.Request) {
 	// Use anonymous struct as login messages are pretty much isolated to this function
 	input := struct {
@@ -161,6 +172,7 @@ func (h *handler) handlePOSTLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Use anonymous struct type as this message type is not used elsewhere.
 	tokenResponse := struct {
 		Token string `json:"token"`
 	}{
@@ -175,6 +187,8 @@ func (h *handler) handlePOSTLogin(w http.ResponseWriter, r *http.Request) {
 
 	h.writeJSONResponse(w, http.StatusAccepted, string(btsResp))
 }
+
+// handleGETDiscover a handler for requests to discover matched candidates
 func (h *handler) handleGETDiscover(w http.ResponseWriter, r *http.Request) {
 	sessionUserID, ok := r.Context().Value(ctxKeySessionUserID).(int)
 	if !ok {
@@ -202,6 +216,8 @@ func (h *handler) handleGETDiscover(w http.ResponseWriter, r *http.Request) {
 
 	h.writeJSONResponse(w, http.StatusOK, string(btsResp))
 }
+
+// handlePOSTSwipe handle requests from users where they are voting on a candidate.
 func (h *handler) handlePOSTSwipe(w http.ResponseWriter, r *http.Request) {
 	input := repository.Swipe{}
 
@@ -263,6 +279,7 @@ func (h *handler) handlePOSTSwipe(w http.ResponseWriter, r *http.Request) {
 	h.writeJSONResponse(w, http.StatusCreated, string(btsResult))
 }
 
+// writeJSONResponse a helper function to reduce duplicated code to return a JSON message.
 func (h *handler) writeJSONResponse(w http.ResponseWriter, statusCode int, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
@@ -272,6 +289,7 @@ func (h *handler) writeJSONResponse(w http.ResponseWriter, statusCode int, messa
 	}
 }
 
+// writePlainResponse a helper function to reduce duplicated code to return a plain text message.
 func (h *handler) writePlainResponse(w http.ResponseWriter, statusCode int, message string) {
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(statusCode)

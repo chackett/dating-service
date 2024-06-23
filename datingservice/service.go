@@ -18,11 +18,14 @@ var ErrDuplicateSwipe = errors.New("already swiped this user")
 
 const ctxKeySessionUserID = "session_user_id"
 
+// DateService is the core component of this project, sitting between the HTTP layer and DB repository.
+// Business logic is to be performed here.
 type DateService struct {
 	logger *slog.Logger
 	repo   *repository.Repository
 }
 
+// New returns a new instance of DateService
 func New(repo *repository.Repository) (*DateService, error) {
 	result := &DateService{
 		logger: slog.New(slog.NewJSONHandler(os.Stdout, nil)),
@@ -32,6 +35,9 @@ func New(repo *repository.Repository) (*DateService, error) {
 	return result, nil
 }
 
+// CreateUser persists a new user into the DB.
+// Note that passwords are not persisted "as is" but rather hashed using a PBKDF.
+// If successful, the created user is returned with its unique identifer (`ID`) populated and the password removed.
 func (s *DateService) CreateUser(ctx context.Context, user repository.User) (*repository.User, error) {
 	h, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.MinCost)
 	if err != nil {
@@ -50,6 +56,8 @@ func (s *DateService) CreateUser(ctx context.Context, user repository.User) (*re
 	return createdUser, nil
 }
 
+// SetUserPreferences stores an updated set of preferences for a user. Note that the underlying DB operation is "upsert"
+// so existing preferences will be overridden.
 func (s *DateService) SetUserPreferences(ctx context.Context, prefs repository.UserPreferences) error {
 	err := s.repo.UpsertUserPreferences(ctx, prefs)
 	if err != nil {
@@ -58,6 +66,8 @@ func (s *DateService) SetUserPreferences(ctx context.Context, prefs repository.U
 	return nil
 }
 
+// Login is used to create an authenticated session for a user, so subsequent authenticated calls can be made. Here a username
+// and password is provided, and if valid, a session token is returned.
 func (s *DateService) Login(ctx context.Context, email string, password string) (string, error) {
 	user, err := s.repo.GetUserByEmail(ctx, email)
 	if err != nil {
@@ -91,6 +101,9 @@ func (s *DateService) Login(ctx context.Context, email string, password string) 
 	return userSession.Token, nil
 }
 
+// Discover returns a collection of profiles that have been ranked and matched against the logged-in user. The intention
+// is that these are presented to the user and subsequently "swiped", "yes" or "no" by the user.
+// The returned results are ranked in decreasing order and some sensitive information has been removed for privacy reasons.
 func (s *DateService) Discover(ctx context.Context, userID int) (rankingservice.RankedResultSet, error) {
 	sessionUserID, ok := ctx.Value(ctxKeySessionUserID).(int)
 	if !ok {
@@ -130,11 +143,8 @@ func (s *DateService) Discover(ctx context.Context, userID int) (rankingservice.
 
 		candidateDistance := currentUser.DistanceFromUser(cand)
 		cand.Age = cand.CalculateAge()
-		// Purge sensitive fields before adding to result set
-		cand.Location = ""
-		cand.DateOfBirth = nil
-		cand.Password = ""
-		cand.Email = ""
+		cand.MaskPrivateFields()
+
 		rankedMatch := rankingservice.RankedMatch{
 			User:           cand,
 			Ranking:        score,
@@ -147,6 +157,7 @@ func (s *DateService) Discover(ctx context.Context, userID int) (rankingservice.
 	return rankedMatches, nil
 }
 
+// Swipe enables a user to specify if they like a discovered profile or not.
 func (s *DateService) Swipe(ctx context.Context, swipeMessage repository.Swipe) (bool, error) {
 	err := s.repo.SubmitSwipe(ctx, swipeMessage)
 	if err != nil {
@@ -164,6 +175,8 @@ func (s *DateService) Swipe(ctx context.Context, swipeMessage repository.Swipe) 
 	return match, nil
 }
 
+// AuthenticateUserToken verifies the tokens created during calls to Login. If the token is valid, the linked users ID is
+// returned.
 func (s *DateService) AuthenticateUserToken(ctx context.Context, token string) (int, error) {
 	u, err := s.repo.GetUserFromAuthToken(ctx, token)
 	if err != nil {

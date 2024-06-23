@@ -1,7 +1,5 @@
 # Dating Service
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/ShubhamTatvamasi/gin-key-value-store)](https://goreportcard.com/report/github.com/chackett/dating-service)
-
 A rudimentary web service which could be used to power a dating app.
 
 ## Excuses made :)
